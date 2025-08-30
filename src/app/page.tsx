@@ -1,103 +1,165 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import Map from '@/components/Map'
+import EstablishmentCard from '@/components/EstablishmentCard'
+import { Establishment } from '@/lib/db/schema'
+import { getUserLocation, calculateDistance } from '@/lib/db/utils'
+
+export default function HomePage() {
+  const [establishments, setEstablishments] = useState<Establishment[]>([])
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [locationPermission, setLocationPermission] = useState<string>('prompt')
+
+  // Obtener ubicación del usuario
+  const requestLocation = async () => {
+    try {
+      setLocationPermission('requesting')
+      const location = await getUserLocation()
+      setUserLocation(location)
+      setLocationPermission('granted')
+      fetchEstablishments(location)
+    } catch (error) {
+      console.error('Error obteniendo ubicación:', error)
+      setLocationPermission('denied')
+      setError('No se pudo obtener tu ubicación. Mostrando todos los establecimientos.')
+      fetchEstablishments()
+    }
+  }
+
+  // Obtener establecimientos
+  const fetchEstablishments = async (location?: { lat: number; lng: number }) => {
+    try {
+      const params = location 
+        ? `?lat=${location.lat}&lng=${location.lng}&radius=10`
+        : ''
+      
+      const response = await fetch(`/api/establishments${params}`)
+      
+      if (!response.ok) {
+        throw new Error('Error al cargar establecimientos')
+      }
+
+      const data = await response.json()
+      setEstablishments(data.establishments)
+    } catch (error) {
+      console.error('Error fetching establishments:', error)
+      setError('Error al cargar los establecimientos')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Efecto inicial
+  useEffect(() => {
+    requestLocation()
+  }, [])
+
+  // Calcular distancia para cada establecimiento
+  const establishmentsWithDistance = establishments.map(establishment => {
+    if (!userLocation) return { establishment, distance: undefined }
+    
+    const distance = calculateDistance(
+      userLocation.lat,
+      userLocation.lng,
+      parseFloat(establishment.latitude as string),
+      parseFloat(establishment.longitude as string)
+    )
+    
+    return { establishment, distance }
+  }).sort((a, b) => {
+    if (!a.distance || !b.distance) return 0
+    return a.distance - b.distance
+  })
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-gray-900">TeloChucú</h1>
+          <p className="text-gray-600">Encuentra telos cercanos a tu ubicación</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Información de ubicación */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          {locationPermission === 'requesting' && (
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-3"></div>
+              <p className="text-gray-600">Obteniendo tu ubicación...</p>
+            </div>
+          )}
+          
+          {locationPermission === 'denied' && (
+            <div className="flex items-center justify-between">
+              <p className="text-amber-600">Ubicación no disponible - Mostrando todos los establecimientos</p>
+              <button 
+                onClick={requestLocation}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Intentar de nuevo
+              </button>
+            </div>
+          )}
+
+          {locationPermission === 'granted' && userLocation && (
+            <p className="text-green-600">
+              Ubicación detectada - Mostrando establecimientos cercanos
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando establecimientos...</p>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-2 gap-6">
+            {/* Mapa */}
+            <div className="order-2 lg:order-1">
+              <h2 className="text-lg font-semibold mb-4">Mapa</h2>
+              <Map establishments={establishments} userLocation={userLocation} />
+            </div>
+
+            {/* Lista de establecimientos */}
+            <div className="order-1 lg:order-2">
+              <h2 className="text-lg font-semibold mb-4">
+                Establecimientos encontrados ({establishments.length})
+              </h2>
+              
+              {establishments.length === 0 ? (
+                <div className="text-center py-8 bg-white rounded-lg">
+                  <p className="text-gray-500">No se encontraron establecimientos cercanos.</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Intenta ampliar el radio de búsqueda o verifica tu ubicación.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {establishmentsWithDistance.map(({ establishment, distance }) => (
+                    <EstablishmentCard
+                      key={establishment.id}
+                      establishment={establishment}
+                      distance={distance}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-  );
+  )
 }
