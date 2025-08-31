@@ -79,7 +79,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">TeloChucú</h1>
+          <h1 className="text-2xl font-bold text-gray-900">TeloChucu</h1>
           <p className="text-gray-600">Encuentra telos cercanos a tu ubicación</p>
         </div>
       </header>
