@@ -5,6 +5,8 @@ import Map from '@/components/Map'
 import EstablishmentCard from '@/components/EstablishmentCard'
 import { Establishment } from '@/lib/db/schema'
 import { getUserLocation, calculateDistance } from '@/lib/db/utils'
+import { Nav } from '../components/Nav'
+import { Footer } from '../components/Footer'
 
 export default function HomePage() {
   const [establishments, setEstablishments] = useState<Establishment[]>([])
@@ -75,7 +77,7 @@ export default function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -84,82 +86,94 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Información de ubicación */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          {locationPermission === 'requesting' && (
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-3"></div>
-              <p className="text-gray-600">Obteniendo tu ubicación...</p>
-            </div>
-          )}
-          
-          {locationPermission === 'denied' && (
-            <div className="flex items-center justify-between">
-              <p className="text-amber-600">Ubicación no disponible - Mostrando todos los establecimientos</p>
-              <button 
-                onClick={requestLocation}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Intentar de nuevo
-              </button>
-            </div>
-          )}
+      {/* Contenido principal */}
+      <div className="flex flex-1">
+        <Nav />
+        <main className="flex-1 p-4">
+          <div className="max-w-7xl mx-auto px-4 py-6">
 
-          {locationPermission === 'granted' && userLocation && (
-            <p className="text-green-600">
-              Ubicación detectada - Mostrando establecimientos cercanos
-            </p>
-          )}
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando establecimientos...</p>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Mapa */}
-            <div className="order-2 lg:order-1">
-              <h2 className="text-lg font-semibold mb-4">Mapa</h2>
-              <Map establishments={establishments} userLocation={userLocation} />
-            </div>
-
-            {/* Lista de establecimientos */}
-            <div className="order-1 lg:order-2">
-              <h2 className="text-lg font-semibold mb-4">
-                Establecimientos encontrados ({establishments.length})
-              </h2>
-              
-              {establishments.length === 0 ? (
-                <div className="text-center py-8 bg-white rounded-lg">
-                  <p className="text-gray-500">No se encontraron establecimientos cercanos.</p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Intenta ampliar el radio de búsqueda o verifica tu ubicación.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                  {establishmentsWithDistance.map(({ establishment, distance }) => (
-                    <EstablishmentCard
-                      key={establishment.id}
-                      establishment={establishment}
-                      distance={distance}
-                    />
-                  ))}
+            {/* Información de ubicación */}
+            <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+              {locationPermission === 'requesting' && (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500 mr-3"></div>
+                  <p className="text-gray-600">Obteniendo tu ubicación...</p>
                 </div>
               )}
+              
+              {locationPermission === 'denied' && (
+                <div className="flex items-center justify-between">
+                  <p className="text-amber-600">Ubicación no disponible - Mostrando todos los establecimientos</p>
+                  <button 
+                    onClick={requestLocation}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
+                    Intentar de nuevo
+                  </button>
+                </div>
+              )}
+
+              {locationPermission === 'granted' && userLocation && (
+                <p className="text-green-600">
+                  Ubicación detectada - Mostrando establecimientos cercanos
+                </p>
+              )}
             </div>
+
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg mb-6">
+                {error}
+              </div>
+            )}
+
+            {/* Contenido */}
+            {loading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Cargando establecimientos...</p>
+              </div>
+            ) : (
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Mapa */}
+                <div className="order-2 lg:order-1">
+                  <h2 className="text-lg font-semibold mb-4">Mapa</h2>
+                  <Map establishments={establishments} userLocation={userLocation} />
+                </div>
+
+                {/* Lista de establecimientos */}
+                <div className="order-1 lg:order-2">
+                  <h2 className="text-lg font-semibold mb-4">
+                    Establecimientos encontrados ({establishments.length})
+                  </h2>
+                  
+                  {establishments.length === 0 ? (
+                    <div className="text-center py-8 bg-white rounded-lg">
+                      <p className="text-gray-500">No se encontraron establecimientos cercanos.</p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        Intenta ampliar el radio de búsqueda o verifica tu ubicación.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                      {establishmentsWithDistance.map(({ establishment, distance }) => (
+                        <EstablishmentCard
+                          key={establishment.id}
+                          establishment={establishment}
+                          distance={distance}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </main>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }
