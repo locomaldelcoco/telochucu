@@ -57,7 +57,7 @@ export function Footer() {
               <li><a href="#" className="hover:text-white">Sobre nosotros</a></li>
               <li><a href="#" className="hover:text-white">Blog</a></li>
               <li><a href="#" className="hover:text-white">Empleos</a></li>
-              <li><a href="#" className="hover:text-white">Prensa</a></li>
+              
             </ul>
           </div>
         </div>

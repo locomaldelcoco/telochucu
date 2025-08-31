@@ -7,6 +7,8 @@ import { Establishment } from '@/lib/db/schema'
 import { getUserLocation, calculateDistance } from '@/lib/db/utils'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
+import { AuthModal } from '../components/AuthModal'
+import '../components/auth-styles.css'
 
 export default function HomePage() {
   const [establishments, setEstablishments] = useState<Establishment[]>([])
@@ -14,7 +16,24 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [locationPermission, setLocationPermission] = useState<string>('prompt')
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const [user, setUser] = useState(null)
 
+
+  // Cargar usuario desde localStorage
+   useEffect(() => {
+      const token = localStorage.getItem("authToken")
+      const userData = localStorage.getItem("userData")
+      if (token && userData) {
+        try {
+          setUser(JSON.parse(userData))
+        } catch (error) {
+          console.error("Error parsing user data:", error)
+          localStorage.removeItem("authToken")
+          localStorage.removeItem("userData")
+        }
+    }
+  }, [])
   // Obtener ubicación del usuario
   const requestLocation = async () => {
     try {
@@ -53,7 +72,7 @@ export default function HomePage() {
       setLoading(false)
     }
   }
-
+  
   // Efecto inicial
   useEffect(() => {
     requestLocation()
@@ -76,6 +95,25 @@ export default function HomePage() {
     return a.distance - b.distance
   })
 
+    const handleOpenAuthModal = () => {
+    setIsAuthModalOpen(true)
+  }
+
+  const handleCloseAuthModal = () => {
+    setIsAuthModalOpen(false)
+  }
+
+const handleAuthSuccess = (userData: any) => {
+  setUser(userData)
+  setIsAuthModalOpen(false)
+}
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("userData")
+    setUser(null)
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Header */}
@@ -85,10 +123,10 @@ export default function HomePage() {
           <p className="text-gray-600">Encuentra telos cercanos a tu ubicación</p>
         </div>
       </header>
-
+     
       {/* Contenido principal */}
       <div className="flex flex-1">
-        <Nav />
+         <Nav user={user} onOpenAuth={handleOpenAuthModal} onLogout={handleLogout} />
         <main className="flex-1 p-4">
           <div className="max-w-7xl mx-auto px-4 py-6">
 
@@ -174,6 +212,9 @@ export default function HomePage() {
 
       {/* Footer */}
       <Footer />
+      <AuthModal isOpen={isAuthModalOpen} onClose={handleCloseAuthModal} onAuthSuccess={handleAuthSuccess} />
+
     </div>
+     
   )
 }
